@@ -34,7 +34,7 @@
 
 ## 🚀 快速上手（30 秒）
 
-1. 下载 [`ShotCheck.apk`](./ShotCheck.apk) 安装到监视器或安卓手机
+1. 下载 [`ShotCheck.apk`](https://github.com/horffsky/Shooting-board-Checklist/releases/latest) 安装到监视器或安卓手机
 2. 打开 App → 点击右上角 **📥 导入** → 选择 [`分镜示例.csv`](./分镜示例.csv)
 3. 看到卡片后，**双击**任意卡片切换完成状态
 4. 点击 **☰ 卡片** 切换到列表模式看看
@@ -64,7 +64,7 @@
 
 ### 方式一：APK 安装（推荐）
 
-下载 [`ShotCheck.apk`](./ShotCheck.apk)，在安卓监视器或手机上安装即可。
+下载 [`ShotCheck.apk`](https://github.com/horffsky/Shooting-board-Checklist/releases/latest)，在安卓监视器或手机上安装即可。
 
 ### 方式二：浏览器直接打开（电脑 / Pad）
 
