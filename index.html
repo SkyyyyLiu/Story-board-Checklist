@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>分镜Checklist</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif}
+  body{
+    background:#0d0d0f;
+    color:#f0f0f2;
+    display:flex;
+    flex-direction:column;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    padding-left:env(safe-area-inset-left,0px);
+    padding-right:env(safe-area-inset-right,0px);
+  }
+
+  /* ===== Top Bar ===== */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:4px 20px;
+    padding-left:calc(20px + env(safe-area-inset-left,0px));
+    padding-right:calc(20px + env(safe-area-inset-right,0px));
+    padding-top:calc(4px + env(safe-area-inset-top,0px));
+    background:rgba(13,13,15,0.92);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-bottom:2px solid rgba(240,204,74,0.4);
+    flex-shrink:0;z-index:20;min-height:56px;
+    position:relative;
+  }
+  .topbar-left{display:flex;align-items:center;gap:10px;overflow:hidden;min-width:0}
+  .copyright{font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:0.3px;white-space:nowrap;flex-shrink:0}
+  .copyright .hl{font-size:16px;font-weight:600;color:#e09f3e;letter-spacing:0.5px}
+  .version{font-size:10px;color:rgba(255,255,255,0.15);padding:2px 6px;border:1px solid rgba(255,255,255,0.08);border-radius:4px;letter-spacing:0.5px;flex-shrink:0}
+  .topbar-stats{font-size:15px;color:rgba(255,255,255,0.5);font-weight:500}
+  .topbar-stats span{color:#fff;font-weight:600}
+  .topbar-right{display:flex;align-items:center;gap:6px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .topbar-right::-webkit-scrollbar{display:none}
+
+  /* ===== Buttons with color blocks ===== */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:5px;
+    border:none;border-radius:10px;
+    font-size:13px;font-weight:500;cursor:pointer;
+    padding:8px 12px;
+    transition:all .2s;
+    -webkit-touch-callout:none;touch-action:manipulation;
+    min-height:40px;
+    background:rgba(255,255,255,0.08);
+    color:#fff;
+  }
+  .btn:active{transform:scale(0.94);opacity:0.85}
+  .btn .ico{font-size:17px;line-height:1;display:inline-block;width:22px;text-align:center}
+  .btn .lbl{font-size:12px;white-space:nowrap}
+  .btn-primary{background:#007aff;color:#fff}
+  .btn-primary:active{background:#005bbf}
+  .btn-danger{background:rgba(255,69,58,0.2);color:#ff453a}
+  .btn-danger.active{background:#ff453a;color:#fff}
+
+  /* Add — e09f3e */
+  .btn-add{
+    background:rgba(224,159,62,0.15);
+    color:#e09f3e;
+  }
+  .btn-add:active{background:rgba(224,159,62,0.3)}
+
+  /* Import — 84a98c */
+  .btn-import{
+    background:rgba(132,169,140,0.15);
+    color:#84a98c;
+  }
+  .btn-import:active{background:rgba(132,169,140,0.3)}
+
+  /* Phone — 52796f */
+  .btn-phone{
+    background:rgba(82,121,111,0.15);
+    color:#52796f;
+  }
+  .btn-phone:active{background:rgba(82,121,111,0.3)}
+
+  /* Mode toggle — 灰色/激活 84a98c */
+  .btn-mode{
+    background:rgba(255,255,255,0.06);
+    color:rgba(255,255,255,0.35);
+  }
+  .btn-mode.active{
+    background:rgba(132,169,140,0.15);
+    color:#84a98c;
+    font-weight:600;
+  }
+  .btn-mode:active{background:rgba(255,255,255,0.12)}
+
+  /* Lock */
+  .btn-lock{
+    background:rgba(255,255,255,0.06);
+    color:rgba(255,255,255,0.4);
+  }
+  .btn-lock.active{
+    background:rgba(255,69,58,0.2);
+    color:#ff453a;
+  }
+  .btn-lock:active{background:rgba(255,255,255,0.12)}
+
+  @keyframes pulse{0%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
+
+  /* ===== Main ===== */
+  .main{
+    flex:1;overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding:16px 12px 20px;
+    position:relative;
+  }
+  .main::-webkit-scrollbar{width:4px}
+  .main::-webkit-scrollbar-track{background:transparent}
+  .main::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px}
+
+  /* ===== Empty State ===== */
+  .empty-state{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:70%;color:rgba(255,255,255,0.25);text-align:center;gap:16px;
+  }
+  .empty-state svg{width:64px;height:64px;opacity:0.3}
+  .empty-state p{font-size:15px;line-height:1.6}
+  .empty-state .import-hint{font-size:13px;color:rgba(255,255,255,0.18)}
+
+  .guide-list{text-align:left;margin-top:8px}
+  .guide-item{font-size:13px;color:rgba(255,255,255,0.4);padding:5px 0;line-height:1.5;display:flex;align-items:center;gap:8px}
+  .guide-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;font-size:14px;flex-shrink:0}
+
+  /* ===== Card Grid (flex for reorder) ===== */
+  .card-grid{
+    display:flex;flex-wrap:wrap;gap:12px;
+    padding-bottom:8px;align-content:flex-start;
+    position:relative;min-height:100px;
+  }
+  .card-grid.dragging{cursor:grabbing}
+
+  /* ===== Card ===== */
+  .card{
+    position:relative;
+    width:calc(50% - 6px);
+    background:linear-gradient(135deg,rgba(255,255,255,0.09) 0%,rgba(255,255,255,0.04) 100%);
+    border-radius:16px;padding:12px 14px 10px;
+    border:1px solid rgba(255,255,255,0.06);
+    transition:transform .3s ease,opacity .3s ease,box-shadow .3s ease,background .3s;
+    cursor:grab;
+    will-change:transform;
+  }
+  .card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);
+    opacity:0;transition:opacity .3s;
+  }
+  .card.completed::before{
+    background:linear-gradient(90deg,transparent,#30d158,transparent);
+    opacity:1;
+  }
+  /* List mode — warm accent (对冲 84a98c) */
+  .card-grid.list-mode .card.completed::before{
+    background:linear-gradient(90deg,transparent,#e09f3e,transparent);
+  }
+  .card-grid.list-mode .card.completed .check-badge{
+    background:#e09f3e;
+    box-shadow:0 2px 8px rgba(224,159,62,0.3);
+  }
+  .card-grid.list-mode .card.completed .card-id{color:rgba(224,159,62,0.7)}
+  /* List mode bottom progress — warm accent */
+  .bottom-progress.list-accent .bp-fill{
+    background:linear-gradient(90deg,rgba(245,208,78,0.5),#f5d04e);
+  }
+  .bottom-progress.list-accent .bp-pct{color:#f5d04e}
+  .bottom-progress.list-accent .bp-fill .bp-copy{color:rgba(245,208,78,0.9)}
+  .bottom-progress.list-accent .bp-fill .bp-copy .hl{color:#fff}
+
+  /* Swipe feedback */
+  .card.swiping{transition:none !important;z-index:5;touch-action:none}
+  .card.swiped-right{opacity:0.4;transform:translateX(80px) scale(0.95) !important;transition:all .4s ease !important}
+  .card.swiped-left{opacity:0.4;transform:translateX(-80px) scale(0.95) !important;transition:all .4s ease !important}
+
+  /* Drag state */
+  .card.dragging{
+    opacity:0.85;transform:scale(1.03) rotate(1deg);
+    box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    z-index:100;cursor:grabbing;transition:none !important;touch-action:none;
+  }
+  .card.drag-placeholder{
+    opacity:0.15;transform:scale(0.95);
+    border:2px dashed rgba(255,255,255,0.15);
+    background:transparent !important;
+  }
+
+  /* Completed — grayscale "已拍" style */
+  .card.completed{
+    background:rgba(255,255,255,0.03);
+    border-color:rgba(255,255,255,0.04);
+    filter:grayscale(0.92) brightness(0.75) contrast(0.7);
+  }
+  .card.completed::before{
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);
+    opacity:0;
+  }
+  .card.completed .card-id{color:rgba(255,255,255,0.35)}
+  .card.completed .card-desc{text-decoration:line-through;color:rgba(255,255,255,0.25)}
+  .card.completed .card-tags{opacity:0.25}
+  .card.completed .card-note{opacity:0.2}
+  .card.completed .check-badge{
+    opacity:1;transform:scale(1) rotate(0deg);
+    background:rgba(245,208,78,0.2);
+    box-shadow:none;
+    border:1.5px solid rgba(245,208,78,0.4);
+  }
+  .card.completed .check-badge svg{stroke:#f5d04e;stroke-width:3;fill:none}
+  /* Override for list mode — keep same semi-transparent style */
+  .card-grid.list-mode .card.completed .check-badge{
+    background:rgba(245,208,78,0.2);
+    border-color:rgba(245,208,78,0.4);
+    box-shadow:none;
+  }
+  .card-grid.list-mode .card.completed .check-badge svg{stroke:#f5d04e}
+
+  /* ===== Bottom Progress Bar ===== */
+  .bottom-progress{
+    flex-shrink:0;
+    background:rgba(13,13,15,0.92);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-top:2px solid rgba(240,204,74,0.4);
+    padding:2px 10px 0;
+    padding-left:calc(10px + env(safe-area-inset-left,0px));
+    padding-right:calc(10px + env(safe-area-inset-right,0px));
+    display:flex;align-items:center;gap:6px;
+  }
+  .bottom-progress .bp-track{
+    flex:1;
+    height:20px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.04);
+    overflow:hidden;
+    position:relative;
+  }
+  /* Copyright text on track */
+  .bottom-progress .bp-copy{
+    position:absolute;
+    left:10px;right:10px;
+    top:50%;transform:translateY(-50%);
+    font-size:14px;
+    color:rgba(255,255,255,0.12);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    pointer-events:none;
+    line-height:1;
+  }
+  .bottom-progress .bp-copy .hl{color:rgba(255,255,255,0.15);font-weight:500}
+  /* Motivational message */
+  .bottom-progress .bp-message{
+    position:absolute;
+    left:0;right:0;
+    top:50%;transform:translateY(-50%);
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+    color:rgba(255,255,255,0.12);
+    white-space:nowrap;
+    pointer-events:none;
+    display:none;
+    line-height:1;
+  }
+  .bottom-progress .bp-message.show{display:block}
+  /* Fill overlay — lights up the text as progress advances */
+  .bottom-progress .bp-fill{
+    position:absolute;
+    top:0;left:0;bottom:0;
+    border-radius:10px;
+    background:linear-gradient(90deg,rgba(245,208,78,0.5),#f5d04e);
+    transition:width .6s cubic-bezier(0.25,0.46,0.45,0.94);
+    width:0%;
+    overflow:hidden;
+  }
+  .bottom-progress .bp-fill .bp-copy{
+    color:rgba(245,208,78,0.9);
+  }
+  .bottom-progress .bp-fill .bp-copy .hl{color:#fff;font-weight:600}
+  .bottom-progress .bp-fill .bp-message{
+    color:rgba(255,255,255,0.9);
+  }
+  .bottom-progress .bp-fill .bp-message.love{color:rgba(255,255,255,0.9);font-size:16px}
+  .bottom-progress .bp-pct{
+    flex-shrink:0;
+    font-size:16px;
+    font-weight:700;
+    color:#f5d04e;
+    min-width:44px;
+    text-align:right;
+  }
+  @media(max-width:400px){
+    .card-grid{grid-template-columns:1fr;gap:10px}
+    .topbar{padding:8px 12px;min-height:48px}
+    .topbar-title{font-size:15px}
+    .btn{padding:6px 10px;font-size:12px}
+    .bottom-progress{padding:10px 12px 12px;gap:8px}
+    .bottom-progress .bp-info{font-size:12px}
+    .bottom-progress .bp-pct{font-size:12px;min-width:36px}
+    .bottom-progress .bp-track{height:14px}
+    .bottom-progress .bp-copy{font-size:11px}
+  }
+  /* Small screens: hide copyright text on very narrow */
+  @media(max-width:480px){
+    .copyright{display:none}
+  }
+  @media(max-width:420px){
+    .topbar-stats{font-size:12px}
+    .topbar{padding:6px 8px;min-height:40px}
+    .topbar-right{gap:3px}
+    .btn{padding:5px 7px;min-height:34px;font-size:11px}
+    .btn .ico{font-size:14px;width:18px}
+    .btn .lbl{font-size:10px}
+    .bottom-progress{padding:8px 10px 10px;gap:6px}
+    .bottom-progress .bp-info{font-size:11px}
+    .bottom-progress .bp-pct{font-size:11px;min-width:30px}
+    .bottom-progress .bp-track{height:14px}
+  }
+  @media(max-width:360px){
+    .btn .lbl{display:none}
+    .btn{padding:5px 8px;min-width:34px;justify-content:center}
+    .btn .ico{font-size:16px;width:auto}
+  }
+
+  .card.locked{cursor:default}
+  .card.locked:active{transform:none !important}
+
+  /* Check badge */
+  .check-badge{
+    position:absolute;top:10px;right:10px;
+    width:22px;height:22px;border-radius:50%;
+    background:#30d158;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transform:scale(0.5) rotate(-45deg);
+    transition:all .35s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 2px 8px rgba(48,209,88,0.3);
+  }
+  .check-badge svg{width:12px;height:12px;stroke:#000;stroke-width:3;fill:none}
+
+  .card-id{
+    font-size:22px;font-weight:700;color:#fff;
+    letter-spacing:0.3px;margin-bottom:4px;padding-right:28px;
+  }
+  .card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+  .card-tag{
+    display:inline-block;font-size:14px;font-weight:500;
+    padding:3px 10px;border-radius:6px;
+    background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);
+    letter-spacing:0.2px;
+  }
+  .card-tag.type{
+    background:#007aff;
+    color:#fff;
+    font-weight:600;
+  }
+  .card-tag.cam{
+    background:#ff9f0a;
+    color:#fff;
+    font-weight:600;
+  }
+  .card-desc{
+    font-size:18px;line-height:1.4;color:rgba(255,255,255,0.8);
+    margin-bottom:4px;transition:color .3s;
+  }
+  .card-note{
+    font-size:14px;color:rgba(255,255,255,0.3);
+    display:flex;align-items:center;gap:4px;transition:opacity .3s;
+  }
+  .card-note::before{content:'📎';font-size:10px;opacity:0.5}
+
+  /* ===== Progress ===== */
+
+  /* ===== Drop Zone ===== */
+  .dropzone{
+    position:fixed;inset:0;
+    background:rgba(0,122,255,0.15);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    display:none;align-items:center;justify-content:center;
+    z-index:100;flex-direction:column;gap:20px;
+  }
+  .dropzone.show{display:flex}
+  .dropzone svg{width:48px;height:48px;opacity:0.7}
+  .dropzone p{font-size:18px;font-weight:500;color:#5ac8fa}
+
+  /* ===== Import Modal ===== */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-overlay.show{display:flex}
+  .modal{
+    background:#1c1c1e;border-radius:20px;padding:24px;
+    max-width:420px;width:100%;
+    max-height:85vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    border:1px solid rgba(255,255,255,0.06);
+    animation:modalIn .3s ease;
+    -webkit-overflow-scrolling:touch;
+  }
+  @keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @media(max-width:480px){
+    .modal-overlay{padding:12px}
+    .modal{padding:18px;max-height:90vh}
+  }
+  /* Landscape: compact modals */
+  @media(orientation:landscape) and (max-height:500px){
+    .modal-overlay{padding:6px}
+    .modal{padding:8px 12px;max-height:80vh}
+    .modal h2{font-size:13px;margin-bottom:4px}
+    .modal p{font-size:11px;margin-bottom:6px;margin-top:0}
+    .modal .csv-format{font-size:9px;padding:5px 8px;margin-bottom:6px}
+    .modal textarea,.modal input,.modal select{font-size:11px !important;padding:4px 6px !important}
+    .modal .form-group{margin-bottom:6px !important}
+    .modal .form-group label{font-size:10px !important;margin-bottom:2px !important}
+    .file-btn{padding:6px !important;font-size:11px !important}
+    .modal-actions .btn{padding:5px !important;font-size:11px !important}
+    .modal-actions{gap:4px !important;margin-top:6px !important}
+    .import-tabs{margin-bottom:6px}
+    .import-tab{padding:3px 0;font-size:10px}
+    #noteInput{height:60px !important;font-size:11px !important;padding:6px !important}
+    #csvPaste{height:50px !important;font-size:10px !important}
+  }
+  /* Very short landscape (phone) */
+  @media(orientation:landscape) and (max-height:400px){
+    .modal-overlay{padding:4px}
+    .modal{padding:6px 10px;max-height:90vh}
+    .modal h2{font-size:12px;margin-bottom:2px}
+    .modal p{font-size:10px;margin-bottom:4px}
+    .modal textarea{height:40px !important}
+    #noteInput{height:40px !important}
+    .modal .csv-format{padding:4px 6px}
+    .file-btn{padding:4px !important}
+  }
+  .modal h2{font-size:18px;font-weight:600;margin-bottom:6px}
+  .modal p{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:18px;line-height:1.5}
+  .modal .csv-format{
+    background:rgba(255,255,255,0.04);border-radius:10px;padding:12px 14px;
+    font-family:'SF Mono','Menlo',monospace;font-size:11px;line-height:1.7;
+    color:rgba(255,255,255,0.5);margin-bottom:18px;white-space:pre-wrap;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+  .modal .csv-format strong{color:rgba(255,255,255,0.7);font-weight:500}
+
+  /* Import tabs */
+  .import-tabs{
+    display:flex;gap:4px;margin-bottom:16px;
+    background:rgba(255,255,255,0.04);
+    border-radius:10px;padding:3px;
+  }
+  .import-tab{
+    flex:1;padding:8px 0;text-align:center;
+    font-size:13px;font-weight:500;border-radius:8px;
+    color:rgba(255,255,255,0.4);cursor:pointer;
+    transition:all .2s;border:none;background:transparent;
+  }
+  .import-tab.active{background:rgba(0,122,255,0.2);color:#5ac8fa}
+  .import-pane{display:none}
+  .import-pane.active{display:block}
+  .file-input-wrap{position:relative;display:flex;flex-direction:column;gap:10px}
+  .file-input-wrap input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .file-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:14px;border-radius:12px;background:rgba(0,122,255,0.12);
+    border:1px dashed rgba(0,122,255,0.3);color:#5ac8fa;font-size:15px;font-weight:500;
+    cursor:pointer;transition:all .2s;
+  }
+  .file-btn:active{background:rgba(0,122,255,0.2)}
+  .modal-actions{display:flex;gap:8px;margin-top:14px}
+  .modal-actions .btn{flex:1;padding:12px}
+
+  /* ===== Toast ===== */
+  .toast{
+    position:fixed;bottom:30px;left:50%;
+    transform:translateX(-50%) translateY(80px);
+    background:rgba(28,28,30,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    padding:12px 22px;border-radius:14px;font-size:14px;color:#fff;
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow:0 8px 30px rgba(0,0,0,0.4);
+    opacity:0;transition:all .4s cubic-bezier(0.25,0.46,0.45,0.94);
+    z-index:200;white-space:nowrap;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ===== Responsive ===== */
+  @media(min-width:900px){.card{width:calc(33.33% - 8px)}}
+  @media(max-width:500px){.card{width:100%}}
+  @media(orientation:landscape) and (max-height:500px){
+    .topbar{padding:6px 16px;min-height:40px}
+    .topbar-title{font-size:14px}
+    .topbar-stats{font-size:11px}
+    .main{padding:8px 10px 8px}
+    .card-grid{gap:8px}
+    .card{padding:10px 14px 10px;border-radius:12px;width:calc(50% - 4px)}
+    .card-id{font-size:13px;margin-bottom:4px}
+    .card-desc{font-size:12px}
+    .card-tag{font-size:10px;padding:1px 6px}
+    .card-note{font-size:11px}
+  }
+  @media(min-width:1200px){.card{width:calc(25% - 9px)}}
+
+  /* ===== List Mode ===== */
+  .card-grid.list-mode{display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
+  .card-grid.list-mode .card{
+    width:100% !important;
+    display:flex;align-items:center;gap:10px;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:grab;
+    transition:transform .2s,opacity .3s,background .3s;
+  }
+  .card-grid.list-mode .card:active:not(.completed):not(.locked){
+    transform:scale(0.99);
+  }
+  .card-grid.list-mode .check-badge{
+    position:static;flex-shrink:0;
+    width:20px;height:20px;
+  }
+  .card-grid.list-mode .check-badge svg{width:10px;height:10px}
+  .card-grid.list-mode .card-id{
+    font-size:18px;margin-bottom:0;padding-right:0;
+    min-width:90px;flex-shrink:0;
+  }
+  .card-grid.list-mode .card-tags{
+    margin-bottom:0;flex-shrink:0;
+  }
+  .card-grid.list-mode .card-desc{
+    font-size:16px;margin-bottom:0;
+    flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .card-grid.list-mode .card-note{
+    flex-shrink:0;font-size:13px;
+    max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .card-grid.list-mode .card-note::before{content:'📎';font-size:9px;margin-right:1px}
+  .card-grid.list-mode .card.completed .card-desc{white-space:nowrap}
+  .card-grid.list-mode .card .card-tag{
+    font-size:12px;padding:2px 8px;
+  }
+  @media(max-width:600px){
+    .card-grid.list-mode .card{gap:6px;padding:8px 10px}
+    .card-grid.list-mode .card-id{min-width:60px;font-size:12px}
+    .card-grid.list-mode .card-desc{font-size:12px}
+    .card-grid.list-mode .card-note{display:none}
+  }
+  /* ===== Film Strip Decoration ===== */
+  .film-strip-1,
+  .film-strip-2{
+    position:fixed;
+    pointer-events:none;
+    z-index:0;
+    border-radius:5px;
+  }
+  .film-strip-1{
+    right:-90px;
+    bottom:30px;
+    width:500px;
+    height:100px;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 28px,
+      rgba(255,255,255,0.02) 30px,
+      rgba(255,255,255,0.02) 36px,
+      rgba(255,255,255,0.06) 38px,
+      rgba(255,255,255,0.06) 66px
+    );
+    transform:rotate(-18deg);
+  }
+  .film-strip-1::before,
+  .film-strip-1::after{
+    content:'';
+    position:absolute;
+    left:0;right:0;
+    height:12px;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(13,13,15,0.85) 0px,
+      rgba(13,13,15,0.85) 8px,
+      rgba(255,255,255,0.06) 8px,
+      rgba(255,255,255,0.06) 16px,
+      rgba(13,13,15,0.85) 16px,
+      rgba(13,13,15,0.85) 28px
+    );
+    border-top:1px solid rgba(255,255,255,0.04);
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .film-strip-1::before{top:6px}
+  .film-strip-1::after{bottom:6px}
+
+  .film-strip-2{
+    right:-120px;
+    bottom:120px;
+    width:420px;
+    height:70px;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.05) 0px,
+      rgba(255,255,255,0.05) 22px,
+      rgba(255,255,255,0.015) 24px,
+      rgba(255,255,255,0.015) 28px,
+      rgba(255,255,255,0.05) 30px,
+      rgba(255,255,255,0.05) 52px
+    );
+    transform:rotate(-35deg);
+  }
+  .film-strip-2::before,
+  .film-strip-2::after{
+    content:'';
+    position:absolute;
+    left:0;right:0;
+    height:9px;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(13,13,15,0.85) 0px,
+      rgba(13,13,15,0.85) 6px,
+      rgba(255,255,255,0.05) 6px,
+      rgba(255,255,255,0.05) 12px,
+      rgba(13,13,15,0.85) 12px,
+      rgba(13,13,15,0.85) 22px
+    );
+    border-top:1px solid rgba(255,255,255,0.03);
+    border-bottom:1px solid rgba(255,255,255,0.03);
+  }
+  .film-strip-2::before{top:5px}
+  .film-strip-2::after{bottom:5px}
+
+  @media(max-width:500px){.film-strip-1,.film-strip-2{display:none}}
+</style>
+
+</head>
+<body>
+
+<!-- ===== Film Strip Decoration ===== -->
+<div class="film-strip-1"></div>
+<div class="film-strip-2"></div>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="version">v1.2</span>
+    <span class="topbar-stats" id="statsText">
+      <span id="doneCount">0</span>/<span id="totalCount">0</span> 已完成
+    </span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-add" id="addBtn"><span class="ico">➕</span><span class="lbl">新建</span></button>
+    <button class="btn btn-import" id="importBtn"><span class="ico">📥</span><span class="lbl">导入</span></button>
+    <button class="btn btn-phone" id="phoneBtn"><span class="ico">📱</span><span class="lbl">传送</span></button>
+    <button class="btn btn-mode" id="modeBtn"><span class="ico">☰</span><span class="lbl">卡片</span></button>
+    <button class="btn btn-lock" id="lockBtn"><span class="ico">🔓</span><span class="lbl">锁定</span></button>
+  </div>
+</header>
+
+<main class="main" id="main">
+  <div class="empty-state" id="emptyState">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="18" x2="12" y2="12"/>
+      <line x1="9" y1="15" x2="15" y2="15"/>
+    </svg>
+    <p style="font-size:16px;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:4px">欢迎使用 分镜Checklist</p>
+    <div class="guide-list">
+      <div class="guide-item"><span class="guide-ico">➕</span> 点击右上角按钮新建分镜</div>
+      <div class="guide-item"><span class="guide-ico">📥</span> 从电脑导入 CSV 分镜表</div>
+      <div class="guide-item"><span class="guide-ico">📱</span> 扫码从手机传送分镜</div>
+      <div class="guide-item"><span class="guide-ico">👆👆</span> 双击卡片切换完成/未拍</div>
+      <div class="guide-item"><span class="guide-ico">↔️</span> 左右滑动卡片快速标记</div>
+      <div class="guide-item"><span class="guide-ico">☰</span> 切换卡片/列表显示模式</div>
+      <div class="guide-item"><span class="guide-ico">🔓</span> 锁定防止误触 · 长按3秒清空</div>
+    </div>
+  </div>
+  <div class="card-grid" id="cardGrid"></div>
+</main>
+
+<div class="dropzone" id="dropZone">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#5ac8fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="17 8 12 3 7 8"/>
+    <line x1="12" y1="3" x2="12" y2="15"/>
+  </svg>
+  <p>松开导入 CSV 文件</p>
+</div>
+
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <h2 style="margin-bottom:12px">导入分镜</h2>
+
+    <!-- Tabs -->
+    <div class="import-tabs">
+      <button class="import-tab active" data-tab="csvTab">📄 CSV 文件</button>
+      <button class="import-tab" data-tab="noteTab">📝 备忘录粘贴</button>
+    </div>
+
+    <!-- CSV Pane -->
+    <div class="import-pane active" id="csvTab">
+      <p>选择从 Excel 导出的 CSV 文件（UTF-8 编码）。</p>
+      <div class="csv-format">
+<strong>表头列名自动识别：</strong>
+场镜号,景别,运镜,画面描述,备注
+SC1-1,特写,固定,演员眼神特写，表现紧张感,注意补光
+      </div>
+      <div class="file-input-wrap">
+        <input type="file" id="csvFile" accept=".csv,.txt">
+        <div class="file-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          选择 CSV 文件
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="modalCancel">取消</button>
+        <button class="btn btn-primary" id="modalConfirm">确认导入</button>
+      </div>
+      <div id="sampleImportArea" style="display:none;margin-top:10px">
+        <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:6px">或直接粘贴 CSV 纯文本：</p>
+        <textarea id="csvPaste" style="width:100%;height:80px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#fff;font-size:12px;font-family:monospace;padding:8px;resize:vertical"></textarea>
+        <button class="btn btn-primary" id="pasteImportBtn" style="margin-top:6px;width:100%">粘贴导入</button>
+      </div>
+    </div>
+
+    <!-- Notes Pane -->
+    <div class="import-pane" id="noteTab">
+      <p>把备忘录/记事本里的分镜复制粘贴到下面，每行一个分镜。</p>
+      <div class="csv-format">
+<strong>支持的格式示例：</strong>
+→ SC1 | 特写 | 固定 | 演员眼神特写 | 注意补光
+→ 1. 全景 摇镜头 街道全景
+→ SC2-1 中景 主角走进房间
+→ - 特写 - 手部特写拿酒杯
+      </div>
+      <textarea id="noteInput" style="width:100%;height:140px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:14px;font-family:-apple-system,'PingFang SC',sans-serif;padding:12px;resize:vertical;line-height:1.7" placeholder="粘贴你的分镜内容，例如：
+
+SC1 特写 固定 演员眼神特写
+SC2 全景 摇镜头 街道全景加烟雾
+SC3 中景 跟拍 主角穿过走廊"></textarea>
+      <div class="modal-actions">
+        <button class="btn" id="noteCancel">取消</button>
+        <button class="btn btn-primary" id="noteConfirm">📝 解析导入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Phone Transfer Modal ===== -->
+<div class="modal-overlay" id="phoneModal">
+  <div class="modal" style="text-align:center">
+    <div id="phoneConnecting">
+      <h2 style="margin-bottom:12px">📱 从手机传送</h2>
+      <p style="margin-bottom:20px">正在检查传输服务器...</p>
+      <div style="font-size:40px;animation:pulse 1s infinite">⏳</div>
+    </div>
+    <div id="phoneReady" style="display:none">
+      <h2 style="margin-bottom:8px">📱 已就绪</h2>
+      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px">手机扫码 → 粘贴分镜 → 点发送</p>
+      <div id="qrContainer" style="background:#fff;border-radius:12px;padding:16px;display:inline-block;margin-bottom:16px">
+        <div id="qrCode" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px">加载中...</div>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.3)" id="phoneUrl">http://...:8899/phone</p>
+      <div class="modal-actions" style="margin-top:4px">
+        <button class="btn btn-primary" id="phoneRefreshQr">🔄 刷新二维码</button>
+      </div>
+    </div>
+    <div id="phoneOffline" style="display:none">
+      <h2 style="margin-bottom:12px">📱 从手机传送</h2>
+      <p style="margin-bottom:16px;line-height:1.6">需要先启动传输服务器：</p>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;text-align:left;font-family:'SF Mono','Menlo',monospace;font-size:12px;line-height:1.8;color:rgba(255,255,255,0.6);margin-bottom:16px">
+        <span style="color:#30d158">$</span> cd ~/Desktop/分镜Checklist<br>
+        <span style="color:#30d158">$</span> python3 transfer-server.py
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:12px">然后在监视器浏览器打开显示的网址。</p>
+    </div>
+    <div id="phoneArrived" style="display:none">
+      <h2 style="margin-bottom:8px;color:#30d158">✅ 收到</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:4px" id="phoneArrivedMsg">分镜已导入！</p>
+      <p style="font-size:12px;color:rgba(255,255,255,0.3)" id="phoneArrivedLines">等待中...</p>
+    </div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn" id="phoneCloseBtn">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== New Shot Modal ===== -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h2 style="margin-bottom:16px">➕ 新建分镜</h2>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">场镜号</label>
+      <input id="addId" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:15px;font-family:inherit" placeholder="例如 SC1-1">
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div class="form-group" style="flex:1">
+        <label style="font-size:12px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">景别</label>
+        <select id="addType" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;appearance:none;-webkit-appearance:none">
+          <option value="">—</option>
+          <option>特写</option><option>大特写</option><option>近景</option>
+          <option>中景</option><option>中全景</option><option>全景</option>
+          <option>远景</option><option>过肩</option><option>航拍</option>
+          <option>俯拍</option><option>主观</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label style="font-size:12px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">运镜</label>
+        <select id="addCam" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;appearance:none;-webkit-appearance:none">
+          <option value="">—</option>
+          <option>固定</option><option>摇镜头</option><option>推镜头</option>
+          <option>拉镜头</option><option>跟拍</option><option>平移</option>
+          <option>手持</option><option>稳定器</option><option>航拍</option>
+          <option>升降</option><option>环绕</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">画面描述</label>
+      <textarea id="addDesc" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;resize:vertical;min-height:60px;line-height:1.5" placeholder="描述这个镜头的内容"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">备注（可选）</label>
+      <input id="addNote" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:#fff;font-size:14px;font-family:inherit" placeholder="例如 注意补光">
+    </div>
+    <div class="modal-actions" style="gap:6px">
+      <button class="btn" id="addCancel" style="flex:0.6">取消</button>
+      <button class="btn btn-primary" id="addConfirm" style="flex:1">➕ 添加</button>
+      <button class="btn btn-add" id="addDone" style="flex:0.8;background:rgba(224,159,62,0.2);color:#e09f3e;font-weight:600">✓ 完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirm Modal ===== -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="text-align:center;max-width:340px">
+    <div style="font-size:40px;margin-bottom:12px">⚠️</div>
+    <h2 style="margin-bottom:8px">清空所有分镜？</h2>
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.5">此操作不可撤销！<br>所有分镜将被永久删除。</p>
+    <div class="modal-actions" style="gap:8px">
+      <button class="btn" id="confirmCancel" style="flex:1;padding:12px">取消</button>
+      <button class="btn btn-danger" id="confirmOk" style="flex:1;padding:12px;font-weight:600">🗑️ 确认清空</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== Bottom Progress ===== -->
+<div class="bottom-progress" id="bottomProgress" style="display:none">
+  <div class="bp-track" id="bpTrack">
+    <span class="bp-copy" id="bpCopy">©胡子盖 horffsky@gmail.com <span class="hl">Shooting-board Checklist</span></span>
+    <span class="bp-message" id="bpMsgTrack"></span>
+    <div class="bp-fill" id="bpFill">
+      <span class="bp-copy bp-copy-fill">©胡子盖 horffsky@gmail.com <span class="hl">Shooting-board Checklist</span></span>
+      <span class="bp-message bp-message-fill" id="bpMsgFill"></span>
+    </div>
+  </div>
+  <div class="bp-pct" id="bpPct">0%</div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let shots = [];
+let isLocked = false;
+let isListMode = false;
+const STORAGE_KEY = 'shotboard_data_v2';
+const LOCK_KEY = 'shotboard_locked_v2';
+const MODE_KEY = 'shotboard_mode_v2';
+
+const cardGrid = document.getElementById('cardGrid');
+const emptyState = document.getElementById('emptyState');
+const doneCount = document.getElementById('doneCount');
+const totalCount = document.getElementById('totalCount');
+const importBtn = document.getElementById('importBtn');
+const lockBtn = document.getElementById('lockBtn');
+const modeBtn = document.getElementById('modeBtn');
+const importModal = document.getElementById('importModal');
+const modalCancel = document.getElementById('modalCancel');
+const modalConfirm = document.getElementById('modalConfirm');
+const csvFile = document.getElementById('csvFile');
+const dropZone = document.getElementById('dropZone');
+const toastEl = document.getElementById('toast');
+const sampleImportArea = document.getElementById('sampleImportArea');
+const csvPaste = document.getElementById('csvPaste');
+const pasteImportBtn = document.getElementById('pasteImportBtn');
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(shots));
+    localStorage.setItem(LOCK_KEY, isLocked ? '1' : '0');
+    localStorage.setItem(MODE_KEY, isListMode ? 'list' : 'card');
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const data = localStorage.getItem(STORAGE_KEY);
+    const lockData = localStorage.getItem(LOCK_KEY);
+    const modeData = localStorage.getItem(MODE_KEY);
+    if(data) shots = JSON.parse(data);
+    if(lockData) isLocked = lockData === '1';
+    if(modeData) isListMode = modeData === 'list';
+  }catch(e){}
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(){
+  const total = shots.length;
+  const done = shots.filter(s => s.done).length;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  doneCount.textContent = done;
+  totalCount.textContent = total;
+  lockBtn.innerHTML = isLocked
+    ? '<span class="ico">🔒</span><span class="lbl">已锁</span>'
+    : '<span class="ico">🔓</span><span class="lbl">锁定</span>';
+  lockBtn.classList.toggle('active', isLocked);
+
+  // Mode button
+  modeBtn.innerHTML = isListMode
+    ? '<span class="ico">▦</span><span class="lbl">列表</span>'
+    : '<span class="ico">☰</span><span class="lbl">卡片</span>';
+  modeBtn.classList.toggle('active', isListMode);
+  cardGrid.classList.toggle('list-mode', isListMode);
+
+  // Bottom progress accent
+  const bpEl = document.getElementById('bottomProgress');
+  if(bpEl) bpEl.classList.toggle('list-accent', isListMode);
+
+  // Bottom progress
+  const bottomEl = document.getElementById('bottomProgress');
+  if(total === 0){
+    bottomEl.style.display = 'none';
+  }else{
+    bottomEl.style.display = 'flex';
+    document.getElementById('bpFill').style.width = pct + '%';
+    document.getElementById('bpPct').textContent = pct + '%';
+
+    // Motivational messages
+    const msgTrack = document.getElementById('bpMsgTrack');
+    const msgFill = document.getElementById('bpMsgFill');
+    const bpCopy = document.getElementById('bpCopy');
+    const bpCopyFill = document.querySelector('.bp-copy-fill');
+
+    // Hide all messages & copyright by default
+    msgTrack.className = 'bp-message';
+    msgFill.className = 'bp-message bp-message-fill';
+    if(bpCopy) bpCopy.style.display = '';
+    if(bpCopyFill) bpCopyFill.style.display = '';
+
+    if(pct >= 100){
+      msgTrack.textContent = '❤️Proud of You❤️';
+      msgTrack.classList.add('show');
+      msgFill.textContent = '❤️Proud of You❤️';
+      msgFill.classList.add('show','love');
+      if(bpCopy) bpCopy.style.display = 'none';
+      if(bpCopyFill) bpCopyFill.style.display = 'none';
+    } else if(pct >= 85){
+      msgTrack.textContent = '加油！你牛马的一天就要结束了😊';
+      msgTrack.classList.add('show');
+      msgFill.textContent = '加油！你牛马的一天就要结束了😊';
+      msgFill.classList.add('show');
+      if(bpCopy) bpCopy.style.display = 'none';
+      if(bpCopyFill) bpCopyFill.style.display = 'none';
+    }
+  }
+
+  if(total === 0){
+    cardGrid.style.display = 'none';
+    emptyState.style.display = 'flex';
+    return;
+  }
+  cardGrid.style.display = 'flex';
+  emptyState.style.display = 'none';
+
+  cardGrid.innerHTML = shots.map((s, idx) => {
+    const doneClass = s.done ? 'completed' : '';
+    return `
+      <div class="card ${doneClass}" data-index="${idx}">
+        <div class="check-badge">
+          <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
+        </div>
+        <div class="card-id">${escHtml(s.id)}</div>
+        <div class="card-tags">
+          ${s.type ? `<span class="card-tag type">${escHtml(s.type)}</span>` : ''}
+          ${s.cam ? `<span class="card-tag cam">${escHtml(s.cam)}</span>` : ''}
+        </div>
+        <div class="card-desc">${escHtml(s.desc)}</div>
+        ${s.note ? `<div class="card-note">${escHtml(s.note)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  saveState();
+}
+
+function escHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// ============================================================
+// TOUCH: SWIPE + LONG-PRESS DRAG
+// ============================================================
+let touchState = null; // {el, idx, startX, startY, startTime, isDragging, isSwiping, offsetX, origIdx, clone }
+
+const SWIPE_THRESHOLD = 50;
+const LONG_PRESS_MS = 300;
+const DRAG_THRESHOLD = 10;
+
+cardGrid.addEventListener('touchstart', onTouchStart, {passive:false});
+cardGrid.addEventListener('touchmove', onTouchMove, {passive:false});
+cardGrid.addEventListener('touchend', onTouchEnd, {passive:false});
+cardGrid.addEventListener('touchcancel', onTouchEnd, {passive:false});
+
+// Also support mouse for desktop testing
+let mouseState = null;
+cardGrid.addEventListener('mousedown', onMouseDown);
+document.addEventListener('mousemove', onMouseMove);
+document.addEventListener('mouseup', onMouseUp);
+
+function getCardFromEvent(e){
+  const target = e.target.closest('.card');
+  if(!target) return null;
+  if(isLocked) return null;
+  const idx = parseInt(target.dataset.index);
+  if(isNaN(idx)) return null;
+  return {el:target, idx};
+}
+
+function onTouchStart(e){
+  if(isLocked) return;
+  const touch = e.touches[0];
+  const info = getCardFromEvent(e);
+  if(!info) return;
+
+  const rect = info.el.getBoundingClientRect();
+  touchState = {
+    el: info.el, idx: info.idx,
+    startX: touch.clientX, startY: touch.clientY,
+    startRect: rect,
+    offsetX: touch.clientX - rect.left,
+    offsetY: touch.clientY - rect.top,
+    startTime: Date.now(),
+    isDragging: false,
+    isSwiping: false,
+    moved: false,
+  };
+}
+
+function onTouchMove(e){
+  if(!touchState) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchState.startX;
+  const dy = touch.clientY - touchState.startY;
+  const dist = Math.abs(dx) + Math.abs(dy);
+  const elapsed = Date.now() - touchState.startTime;
+
+  if(!touchState.isDragging && !touchState.isSwiping){
+    // Long press → drag mode
+    if(elapsed >= LONG_PRESS_MS && Math.abs(dy) < 20 && Math.abs(dx) < 20){
+      touchState.isDragging = true;
+      startDrag(touchState, touch);
+      return;
+    }
+    // Horizontal swipe
+    if(dist > DRAG_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5){
+      touchState.isSwiping = true;
+      touchState.el.classList.add('swiping');
+    }
+    // Vertical scroll → not a gesture for us
+    if(dist > DRAG_THRESHOLD && Math.abs(dy) > Math.abs(dx) * 1.5){
+      touchState = null;
+      return;
+    }
+  }
+
+  if(touchState.isSwiping){
+    touchState.el.style.transform = `translateX(${dx}px)`;
+    // Fade based on distance
+    const opacity = Math.max(0.3, 1 - Math.abs(dx) / 300);
+    touchState.el.style.opacity = opacity;
+  }
+
+  if(touchState.isDragging){
+    moveDrag(touchState, touch);
+  }
+}
+
+function onTouchEnd(e){
+  if(!touchState) return;
+
+  if(touchState.isSwiping){
+    const dx = (e.changedTouches?.[0]?.clientX ?? 0) - touchState.startX;
+    touchState.el.classList.remove('swiping');
+    touchState.el.style.transform = '';
+    touchState.el.style.opacity = '';
+
+    if(Math.abs(dx) >= SWIPE_THRESHOLD){
+      const done = dx > 0; // swipe right = done, left = undo
+      shots[touchState.idx].done = done;
+      // Visual flash
+      touchState.el.classList.add(done ? 'swiped-right' : 'swiped-left');
+      setTimeout(() => {
+        if(touchState.el){
+          touchState.el.classList.remove('swiped-right','swiped-left');
+        }
+        render();
+      }, 350);
+      showToast(done ? '✅ 已标记完成' : '↩️ 已恢复未拍');
+    }
+  }
+
+  if(touchState.isDragging){
+    endDrag(touchState);
+  }
+
+  touchState = null;
+}
+
+// ============================================================
+// DRAG & DROP (Reorder)
+// ============================================================
+let dragClone = null;
+let dragPlaceholder = null;
+let dragOverIdx = -1;
+
+function startDrag(state, pointer){
+  state.el.classList.add('dragging');
+  cardGrid.classList.add('dragging');
+
+  // Create a visual clone that follows the finger
+  const rect = state.el.getBoundingClientRect();
+  dragClone = state.el.cloneNode(true);
+  dragClone.style.position = 'fixed';
+  dragClone.style.left = rect.left + 'px';
+  dragClone.style.top = rect.top + 'px';
+  dragClone.style.width = rect.width + 'px';
+  dragClone.style.pointerEvents = 'none';
+  dragClone.style.zIndex = '200';
+  dragClone.style.margin = '0';
+  dragClone.classList.add('dragging');
+  document.body.appendChild(dragClone);
+
+  // Original card becomes placeholder
+  state.el.classList.add('drag-placeholder');
+  dragPlaceholder = state.el;
+
+  moveDrag(state, pointer);
+}
+
+function moveDrag(state, pointer){
+  if(!dragClone) return;
+  const rect = state.startRect;
+  dragClone.style.left = (pointer.clientX - state.offsetX) + 'px';
+  dragClone.style.top = (pointer.clientY - state.offsetY) + 'px';
+
+  // Find which card we're over
+  const cards = Array.from(cardGrid.querySelectorAll('.card:not(.drag-placeholder)'));
+  let newIdx = -1;
+  const cloneCenter = pointer.clientY;
+  for(let i=0; i<cards.length; i++){
+    const r = cards[i].getBoundingClientRect();
+    if(cloneCenter < r.top + r.height/2){
+      newIdx = parseInt(cards[i].dataset.index);
+      break;
+    }
+  }
+  if(newIdx === -1 && cards.length > 0){
+    newIdx = parseInt(cards[cards.length-1].dataset.index);
+  }
+
+  if(newIdx !== -1 && newIdx !== state.idx){
+    dragOverIdx = newIdx;
+    // Reorder the array (immutable)
+    const newShots = [...shots];
+    const [moved] = newShots.splice(state.idx, 1);
+    newShots.splice(newIdx, 0, moved);
+    shots = newShots;
+    state.idx = newIdx;
+    render();
+    // Re-grab the placeholder reference
+    const updatedCards = cardGrid.querySelectorAll('.card');
+    for(let i=0; i<updatedCards.length; i++){
+      if(parseInt(updatedCards[i].dataset.index) === state.idx){
+        updatedCards[i].classList.add('drag-placeholder');
+        dragPlaceholder = updatedCards[i];
+        break;
+      }
+    }
+  }
+}
+
+function endDrag(state){
+  cardGrid.classList.remove('dragging');
+  if(dragClone){
+    dragClone.remove();
+    dragClone = null;
+  }
+  if(dragPlaceholder){
+    dragPlaceholder.classList.remove('drag-placeholder');
+    dragPlaceholder.classList.remove('dragging');
+    dragPlaceholder = null;
+  }
+  render();
+  showToast('🔄 分镜顺序已更新');
+}
+
+// ============================================================
+// MOUSE SUPPORT (Desktop)
+// ============================================================
+function onMouseDown(e){
+  if(isLocked) return;
+  const info = getCardFromEvent(e);
+  if(!info) return;
+  const rect = info.el.getBoundingClientRect();
+  mouseState = {
+    el: info.el, idx: info.idx,
+    startX: e.clientX, startY: e.clientY,
+    startRect: rect,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+    startTime: Date.now(),
+    isDragging: false, isSwiping: false,
+  };
+}
+
+function onMouseMove(e){
+  if(!mouseState) return;
+  const dx = e.clientX - mouseState.startX;
+  const dy = e.clientY - mouseState.startY;
+  const dist = Math.abs(dx) + Math.abs(dy);
+  const elapsed = Date.now() - mouseState.startTime;
+
+  if(!mouseState.isDragging && !mouseState.isSwiping){
+    if(elapsed >= LONG_PRESS_MS && Math.abs(dy) < 20 && Math.abs(dx) < 20){
+      mouseState.isDragging = true;
+      mouseState.el.classList.add('dragging');
+      // Clone
+      const rect = mouseState.el.getBoundingClientRect();
+      dragClone = mouseState.el.cloneNode(true);
+      dragClone.style.position = 'fixed';
+      dragClone.style.left = rect.left+'px';
+      dragClone.style.top = rect.top+'px';
+      dragClone.style.width = rect.width+'px';
+      dragClone.style.pointerEvents = 'none';
+      dragClone.style.zIndex = '200';
+      dragClone.style.margin = '0';
+      dragClone.classList.add('dragging');
+      document.body.appendChild(dragClone);
+      mouseState.el.classList.add('drag-placeholder');
+      dragPlaceholder = mouseState.el;
+      cardGrid.classList.add('dragging');
+      return;
+    }
+    if(dist > DRAG_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5){
+      mouseState.isSwiping = true;
+      mouseState.el.classList.add('swiping');
+    }
+    if(dist > DRAG_THRESHOLD && Math.abs(dy) > Math.abs(dx) * 1.5){
+      mouseState = null;
+      return;
+    }
+  }
+
+  if(mouseState.isSwiping){
+    mouseState.el.style.transform = `translateX(${dx}px)`;
+    mouseState.el.style.opacity = Math.max(0.3, 1 - Math.abs(dx)/300);
+  }
+
+  if(mouseState.isDragging && dragClone){
+    dragClone.style.left = (e.clientX - mouseState.offsetX)+'px';
+    dragClone.style.top = (e.clientY - mouseState.offsetY)+'px';
+    // Find drop position
+    const cards = Array.from(cardGrid.querySelectorAll('.card:not(.drag-placeholder)'));
+    let newIdx = -1;
+    const centerY = e.clientY;
+    for(let i=0; i<cards.length; i++){
+      const r = cards[i].getBoundingClientRect();
+      if(centerY < r.top + r.height/2){
+        newIdx = parseInt(cards[i].dataset.index);
+        break;
+      }
+    }
+    if(newIdx === -1 && cards.length > 0)
+      newIdx = parseInt(cards[cards.length-1].dataset.index);
+
+    if(newIdx !== -1 && newIdx !== mouseState.idx){
+      const newShots = [...shots];
+      const [moved] = newShots.splice(mouseState.idx, 1);
+      newShots.splice(newIdx, 0, moved);
+      shots = newShots;
+      mouseState.idx = newIdx;
+      render();
+      const updated = cardGrid.querySelectorAll('.card');
+      for(let i=0; i<updated.length; i++){
+        if(parseInt(updated[i].dataset.index) === mouseState.idx){
+          updated[i].classList.add('drag-placeholder');
+          dragPlaceholder = updated[i];
+          break;
+        }
+      }
+    }
+  }
+}
+
+function onMouseUp(e){
+  if(!mouseState) return;
+  if(mouseState.isSwiping){
+    const dx = e.clientX - mouseState.startX;
+    mouseState.el.classList.remove('swiping');
+    mouseState.el.style.transform = '';
+    mouseState.el.style.opacity = '';
+    if(Math.abs(dx) >= SWIPE_THRESHOLD){
+      const done = dx > 0;
+      shots[mouseState.idx].done = done;
+      mouseState.el.classList.add(done ? 'swiped-right' : 'swiped-left');
+      setTimeout(() => {
+        if(mouseState.el) mouseState.el.classList.remove('swiped-right','swiped-left');
+        render();
+      }, 350);
+      showToast(done ? '✅ 已标记完成' : '↩️ 已恢复未拍');
+    }
+  }
+  if(mouseState.isDragging){
+    cardGrid.classList.remove('dragging');
+    if(dragClone){dragClone.remove();dragClone=null}
+    if(dragPlaceholder){dragPlaceholder.classList.remove('drag-placeholder','dragging');dragPlaceholder=null}
+    render();
+    showToast('🔄 分镜顺序已更新');
+  }
+  mouseState = null;
+}
+
+// ============================================================
+// TAP (quick click without swipe/drag — toggle done)
+// ============================================================
+cardGrid.addEventListener('click', e => {
+  if(isLocked){showToast('🔒 已锁定，请先解锁');return}
+  // Only handle if no swipe/drag happened — check via touch/mouse state timing
+  // We handle this via a separate short-tap detector
+});
+
+// Use a simple approach: if we detect a click that wasn't a swipe/drag
+let lastClickTime = 0;
+let clickCount = 0;
+let clickTimer = null;
+
+cardGrid.addEventListener('pointerdown', e => {
+  if(isLocked) return;
+  const card = e.target.closest('.card');
+  if(!card) return;
+  const idx = parseInt(card.dataset.index);
+  if(isNaN(idx)) return;
+  clickCount++;
+  if(clickCount === 1){
+    lastClickTime = Date.now();
+    // Show brief "双击标记" hint
+    card.style.outline = '1px solid rgba(245,208,78,0.3)';
+    clickTimer = setTimeout(() => {
+      clickCount = 0;
+      card.style.outline = '';
+    }, 400);
+  } else if(clickCount >= 2){
+    clearTimeout(clickTimer);
+    clickCount = 0;
+    card.style.outline = '';
+    const elapsed = Date.now() - lastClickTime;
+    if(elapsed < 500){
+      // Double tap detected
+      shots[idx].done = !shots[idx].done;
+      render();
+      showToast(shots[idx].done ? '✅ 已标记完成' : '↩️ 已恢复未拍');
+    }
+  }
+});
+
+// ============================================================
+// CSV IMPORT
+// ============================================================
+let pendingCsvText = null;
+
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/);
+  if(lines.length < 2) return [];
+  lines[0] = lines[0].replace(/^\uFEFF/,'');
+
+  function parseRow(line){
+    const cols=[]; let cur=[]; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(inQ){
+        if(ch==='"'){if(i+1<line.length&&line[i+1]==='"'){cur.push('"');i++}else inQ=false}
+        else cur.push(ch);
+      }else{
+        if(ch==='"')inQ=true;
+        else if(ch===','){cols.push(cur.join('').trim());cur=[]}
+        else cur.push(ch);
+      }
+    }
+    cols.push(cur.join('').trim());
+    return cols;
+  }
+
+  const header=parseRow(lines[0]);
+  const colMap={};
+  header.forEach((h,i)=>{
+    const hl = h.trim().toLowerCase().replace(/[\s\-_]/g,'');
+    if(hl.includes('场镜')||hl.includes('镜头')||hl.includes('镜号')||hl==='id'||hl==='编号'||hl==='序号') colMap.id=i;
+    else if(hl.includes('景别')||hl.includes('type')||hl.includes('景')) colMap.type=i;
+    else if(hl.includes('运镜')||hl.includes('cam')||hl.includes('move')||hl.includes('镜头运动')||hl.includes('运动')) colMap.cam=i;
+    else if(hl.includes('画面')||hl.includes('描述')||hl.includes('desc')||hl.includes('内容')||hl.includes('分镜')||hl.includes('说明')) colMap.desc=i;
+    else if(hl.includes('备注')||hl.includes('note')||hl.includes('备忘')||hl.includes('附注')||hl.includes('注')) colMap.note=i;
+  });
+
+  const useFixed = Object.keys(colMap).length === 0;
+  const colCount = useFixed ? header.length : -1;
+
+  const result=[];
+  for(let i=1;i<lines.length;i++){
+    const cols=parseRow(lines[i]);
+    if(cols.length<1)continue;
+    if(cols.every(c=>!c.trim()))continue;
+
+    let item;
+    if(useFixed){
+      // Auto-detect based on column count
+      item = { id:'', type:'', cam:'', desc:'', note:'', done:false };
+      if(colCount >= 1) item.id = cols[0] || `镜${i}`;
+      if(colCount === 2)      { item.desc = cols[1] || ''; }
+      else if(colCount === 3) { item.type = cols[1] || ''; item.desc = cols[2] || ''; }
+      else if(colCount === 4) { item.type = cols[1] || ''; item.cam  = cols[2] || ''; item.desc = cols[3] || ''; }
+      else if(colCount >= 5)  { item.type = cols[1] || ''; item.cam  = cols[2] || ''; item.desc = cols[3] || ''; item.note = cols[4] || ''; }
+    }else{
+      item = {
+        id: (colMap.id!==undefined?cols[colMap.id]:'')||`镜${i}`,
+        type: colMap.type!==undefined?(cols[colMap.type]||''):'',
+        cam: colMap.cam!==undefined?(cols[colMap.cam]||''):'',
+        desc: colMap.desc!==undefined?(cols[colMap.desc]||''):'',
+        note: colMap.note!==undefined?(cols[colMap.note]||''):'',
+        done: false
+      };
+    }
+    result.push(item);
+  }
+  return result;
+}
+
+function applyCsvData(parsed){
+  if(!parsed||parsed.length===0){showToast('⚠️ 未解析到有效分镜');return}
+  const existingMap={};
+  shots.forEach(s=>{if(s.id)existingMap[s.id]=s.done});
+  parsed.forEach(p=>{if(p.id&&existingMap[p.id]!==undefined)p.done=existingMap[p.id]});
+  shots=parsed;
+  render();
+  showToast(`✅ 导入 ${shots.length} 个分镜`);
+  importModal.classList.remove('show');
+  pendingCsvText=null;
+}
+
+csvFile.addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{pendingCsvText=ev.target.result;sampleImportArea.style.display='block';csvPaste.value='';showToast('📄 已读取文件，点击"确认导入"')};
+  reader.readAsText(file);
+  csvFile.value='';
+});
+
+modalConfirm.addEventListener('click',()=>{
+  if(pendingCsvText){const parsed=parseCSV(pendingCsvText);applyCsvData(parsed)}
+  else showToast('⚠️ 请先选择 CSV 文件');
+});
+
+pasteImportBtn.addEventListener('click',()=>{
+  const text=csvPaste.value.trim();
+  if(!text){showToast('⚠️ 请粘贴 CSV 内容');return}
+  const parsed=parseCSV(text);
+  applyCsvData(parsed);
+});
+
+importBtn.addEventListener('click',()=>{importModal.classList.add('show');sampleImportArea.style.display='none';csvPaste.value='';pendingCsvText=null});
+modalCancel.addEventListener('click',()=>{importModal.classList.remove('show');pendingCsvText=null});
+importModal.addEventListener('click',e=>{if(e.target===importModal)importModal.classList.remove('show')});
+
+// ============================================================
+// IMPORT TAB SWITCHING
+// ============================================================
+document.querySelectorAll('.import-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.import-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.import-pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ============================================================
+// NOTES IMPORT (smart text parsing)
+// ============================================================
+const noteInput = document.getElementById('noteInput');
+const noteConfirm = document.getElementById('noteConfirm');
+const noteCancel = document.getElementById('noteCancel');
+
+function parseNotesText(text){
+  const lines = text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length===0) return [];
+  const results = [];
+
+  for(const raw of lines){
+    let line = raw.trim();
+    if(!line) continue;
+
+    // Strip leading numbering/bullets
+    line = line.replace(/^[\s]*[\d]+[\.\)、]\s*/,'');
+    line = line.replace(/^[\s]*[-•·→➤]\s*/,'');
+    if(!line.trim()) continue;
+    line = line.trim();
+
+    const item = { id:'', type:'', cam:'', desc:'', note:'', done:false };
+    let parts;
+
+    // Strategy 1: Pipe-separated (most structured)
+    if(line.includes('|')){
+      parts = line.split('|').map(s=>s.trim()).filter(Boolean);
+      if(parts.length >= 2){
+        item.id = parts[0];
+        if(parts.length >= 2) item.type = parts[1] || '';
+        if(parts.length >= 3) item.cam = parts[2] || '';
+        if(parts.length >= 4) item.desc = parts[3] || '';
+        if(parts.length >= 5) item.note = parts.slice(4).join(' | ');
+        if(!item.desc && item.cam) { item.desc = item.cam; item.cam = ''; }
+        results.push(item);
+        continue;
+      }
+    }
+
+    // Strategy 2: Tab-separated
+    if(line.includes('\t')){
+      parts = line.split('\t').map(s=>s.trim()).filter(Boolean);
+      if(parts.length >= 2){
+        item.id = parts.length >= 2 ? parts[0] : `镜${results.length+1}`;
+        if(parts.length >= 2) item.type = parts[1] || '';
+        if(parts.length >= 3) item.cam = parts[2] || '';
+        if(parts.length >= 4) item.desc = parts.slice(3).join(' ');
+        if(!item.desc && item.cam){item.desc=item.cam;item.cam=''}
+        results.push(item);
+        continue;
+      }
+    }
+
+    // Strategy 3: Space/token-separated (natural language)
+    // Split by 2+ spaces first (user formats with aligned columns)
+    let tokens = line.split(/\s{2,}/).map(s=>s.trim()).filter(Boolean);
+    if(tokens.length < 2){
+      // Split by single spaces
+      tokens = line.split(/\s+/).map(s=>s.trim()).filter(Boolean);
+    }
+
+    if(tokens.length === 0) continue;
+    if(tokens.length === 1){
+      item.desc = tokens[0];
+      if(!item.id) item.id = `镜${results.length+1}`;
+      results.push(item);
+      continue;
+    }
+
+    // Detect if first token is a shot ID
+    const isShotCode = /^(sc|shot|cut|c\d)/i.test(tokens[0]) || /^[A-Z]{1,4}\d/i.test(tokens[0]) || /^\d+[-_][A-Z]/i.test(tokens[0]);
+
+    if(isShotCode){
+      item.id = tokens[0];
+      tokens = tokens.slice(1);
+    }
+
+    // If only 1 token left after removing ID, it's the description
+    if(tokens.length === 1){ item.desc = tokens[0]; results.push(item); continue; }
+
+    // Filter out purely separators (-, —, |) 
+    tokens = tokens.filter(t => !/^[-—|]+$/.test(t));
+    if(tokens.length === 0) continue;
+
+    // Remaining tokens: try to extract type(short) + cam(short) + rest = desc
+    // A "shot type" is typically 1-3 Chinese chars: 特写, 全景, 中景, 近景, 远景, 过肩, 航拍, Close-up, etc.
+    // A "camera move" is similar: 固定, 摇镜头, 推, 拉, 跟拍, 平移, Fixed, Pan, etc.
+    const typeWords = ['特写','全景','中景','近景','远景','过肩','航拍','俯拍','仰拍','平拍','主观','大特写','中全景','close-up','medium','wide','full','extreme'];
+    const camWords = ['固定','摇镜头','推镜头','拉镜头','跟拍','平移','推','拉','摇','移','跟','升','降','旋转','环绕','晃动','手持','稳定','fixed','pan','tilt','track','dolly','handheld','steady','crane'];
+
+    if(tokens.length >= 1){
+      // First remaining token: could be type or part of desc
+      const first = tokens[0].toLowerCase();
+      const isType = typeWords.some(w => tokens[0].includes(w) || w.includes(tokens[0])) || tokens[0].length <= 4;
+      const isCam = camWords.some(w => tokens[0].includes(w) || w.includes(tokens[0]));
+
+      if(tokens.length >= 3 && (isType || isCam)){
+        // Assume: type + cam + desc
+        item.type = tokens[0];
+        // Next token: could be cam or part of desc
+        const second = tokens[1].toLowerCase();
+        const secondIsCam = camWords.some(w => tokens[1].includes(w) || w.includes(tokens[1])) || tokens[1].length <= 4;
+        if(tokens.length >= 3 && secondIsCam){
+          item.cam = tokens[1];
+          item.desc = tokens.slice(2).join(' ');
+        } else {
+          item.desc = tokens.slice(1).join(' ');
+        }
+      } else if(tokens.length >= 2 && !isType && !isCam){
+        // First token not recognized as type/cam → treat everything as desc
+        item.desc = tokens.join(' ');
+      } else {
+        // Just two things: [type, desc]
+        item.type = tokens[0];
+        item.desc = tokens.slice(1).join(' ');
+      }
+    }
+
+    if(!item.id) item.id = `镜${results.length+1}`;
+    if(!item.desc && !item.type && !item.cam) continue;
+    results.push(item);
+  }
+  return results;
+}
+
+noteConfirm.addEventListener('click',()=>{
+  const text = noteInput.value.trim();
+  if(!text){showToast('⚠️ 请先粘贴备忘录内容');return}
+  const parsed = parseNotesText(text);
+  if(parsed.length===0){showToast('⚠️ 未识别到有效分镜');return}
+  applyCsvData(parsed);
+});
+
+noteCancel.addEventListener('click',()=>{importModal.classList.remove('show')});
+
+// ============================================================
+// LOCK
+// ============================================================
+lockBtn.addEventListener('click',()=>{isLocked=!isLocked;render();showToast(isLocked?'🔒 已锁定，防止误触':'🔓 已解锁')});
+
+// ============================================================
+// LONG PRESS LOCK → CLEAR ALL SHOTS
+// ============================================================
+let lockPressTimer = null;
+
+function startLockPress(){
+  if(shots.length === 0) return;
+  lockPressTimer = setTimeout(() => {
+    document.getElementById('confirmModal').classList.add('show');
+    lockPressTimer = null;
+  }, 3000);
+}
+function cancelLockPress(){
+  if(lockPressTimer){ clearTimeout(lockPressTimer); lockPressTimer = null; }
+}
+
+// Touch events for mobile (Capacitor WebView)
+lockBtn.addEventListener('touchstart', startLockPress, {passive:true});
+lockBtn.addEventListener('touchend', cancelLockPress);
+lockBtn.addEventListener('touchcancel', cancelLockPress);
+// Mouse events for desktop
+lockBtn.addEventListener('mousedown', startLockPress);
+lockBtn.addEventListener('mouseup', cancelLockPress);
+lockBtn.addEventListener('mouseleave', cancelLockPress);
+
+// ============================================================
+// CONFIRM MODAL
+// ============================================================
+document.getElementById('confirmOk').addEventListener('click', () => {
+  shots = [];
+  render();
+  document.getElementById('confirmModal').classList.remove('show');
+  showToast('🗑️ 所有分镜已清空');
+});
+document.getElementById('confirmCancel').addEventListener('click', () => {
+  document.getElementById('confirmModal').classList.remove('show');
+});
+document.getElementById('confirmModal').addEventListener('click', e => {
+  if(e.target === document.getElementById('confirmModal')){
+    document.getElementById('confirmModal').classList.remove('show');
+  }
+});
+
+// ============================================================
+// PHONE TRANSFER
+// ============================================================
+const phoneBtn = document.getElementById('phoneBtn');
+const phoneModal = document.getElementById('phoneModal');
+const phoneCloseBtn = document.getElementById('phoneCloseBtn');
+const phoneConnecting = document.getElementById('phoneConnecting');
+const phoneReady = document.getElementById('phoneReady');
+const phoneOffline = document.getElementById('phoneOffline');
+const phoneArrived = document.getElementById('phoneArrived');
+const phoneArrivedMsg = document.getElementById('phoneArrivedMsg');
+const phoneArrivedLines = document.getElementById('phoneArrivedLines');
+const phoneUrl = document.getElementById('phoneUrl');
+const qrCodeEl = document.getElementById('qrCode');
+const phoneRefreshQr = document.getElementById('phoneRefreshQr');
+
+let phonePollTimer = null;
+
+function showPhoneView(id){
+  ['phoneConnecting','phoneReady','phoneOffline','phoneArrived'].forEach(v => {
+    document.getElementById(v).style.display = v===id ? '' : 'none';
+  });
+}
+
+function fetchQrFromApi(url){
+  // Use a free QR API
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  qrCodeEl.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width:200px;height:200px;border-radius:4px" onerror="this.parentElement.textContent='⚠️ 加载失败'">`;
+}
+
+phoneBtn.addEventListener('click', async () => {
+  phoneModal.classList.add('show');
+  showPhoneView('phoneConnecting');
+
+  // Check if we're on the server
+  const isServerMode = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+  const baseUrl = isServerMode ? window.location.origin : 'http://' + window.location.hostname + ':8899';
+
+  if(isServerMode){
+    // Test connection
+    try{
+      const r = await fetch(baseUrl + '/api/status');
+      const d = await r.json();
+      if(d.ok){
+        const phoneUrlStr = baseUrl + '/phone';
+        phoneUrl.textContent = phoneUrlStr;
+        fetchQrFromApi(phoneUrlStr);
+        showPhoneView('phoneReady');
+        startPhonePoll(baseUrl);
+        return;
+      }
+    }catch(e){/* fall through */}
+  }
+
+  // Try connecting to local server
+  try{
+    const r = await fetch('http://localhost:8899/api/status');
+    const d = await r.json();
+    if(d.ok){
+      const phoneUrlStr = 'http://' + window.location.hostname + ':8899/phone';
+      phoneUrl.textContent = phoneUrlStr;
+      fetchQrFromApi(phoneUrlStr);
+      showPhoneView('phoneReady');
+      startPhonePoll('http://localhost:8899');
+      return;
+    }
+  }catch(e){/* server not running */}
+
+  // Server not reachable — show instructions
+  showPhoneView('phoneOffline');
+});
+
+function startPhonePoll(baseUrl){
+  clearInterval(phonePollTimer);
+  phonePollTimer = setInterval(async () => {
+    try{
+      const r = await fetch(baseUrl + '/api/poll');
+      const d = await r.json();
+      if(d.ok && d.data){
+        // We got data!
+        const parsed = parseNotesText(d.data);
+        if(parsed.length > 0){
+          applyCsvData(parsed);
+          phoneArrivedMsg.textContent = `导入 ${parsed.length} 个分镜`;
+          phoneArrivedLines.textContent = `共 ${d.data.split('\n').filter(l=>l.trim()).length} 行`;
+          showPhoneView('phoneArrived');
+          setTimeout(() => {
+            if(phoneModal.classList.contains('show')){
+              showPhoneView('phoneReady');
+            }
+          }, 3000);
+        }
+      }
+    }catch(e){/* ignore polling errors */}
+  }, 1500);
+}
+
+phoneCloseBtn.addEventListener('click', () => {
+  clearInterval(phonePollTimer);
+  phoneModal.classList.remove('show');
+});
+
+phoneModal.addEventListener('click', e => {
+  if(e.target === phoneModal){
+    clearInterval(phonePollTimer);
+    phoneModal.classList.remove('show');
+  }
+});
+
+phoneRefreshQr.addEventListener('click', () => {
+  const url = phoneUrl.textContent;
+  if(url) fetchQrFromApi(url);
+});
+
+// ============================================================
+// NEW SHOT
+// ============================================================
+const addBtn = document.getElementById('addBtn');
+const addModal = document.getElementById('addModal');
+const addCancel = document.getElementById('addCancel');
+const addConfirm = document.getElementById('addConfirm');
+const addDone = document.getElementById('addDone');
+
+function clearAddForm(){
+  document.getElementById('addId').value = '';
+  document.getElementById('addType').value = '';
+  document.getElementById('addCam').value = '';
+  document.getElementById('addDesc').value = '';
+  document.getElementById('addNote').value = '';
+}
+
+addBtn.addEventListener('click', () => {
+  clearAddForm();
+  addModal.classList.add('show');
+});
+
+addCancel.addEventListener('click', () => {
+  addModal.classList.remove('show');
+});
+
+addModal.addEventListener('click', e => {
+  if(e.target === addModal) addModal.classList.remove('show');
+});
+
+addConfirm.addEventListener('click', () => {
+  const id = document.getElementById('addId').value.trim() || `镜${shots.length + 1}`;
+  const type = document.getElementById('addType').value;
+  const cam = document.getElementById('addCam').value;
+  const desc = document.getElementById('addDesc').value.trim();
+  const note = document.getElementById('addNote').value.trim();
+
+  if(!desc){ showToast('⚠️ 请填写画面描述'); return; }
+
+  shots.push({ id, type, cam, desc, note, done: false });
+  render();
+  // Auto-increment if numeric ID, otherwise clear
+  const idField = document.getElementById('addId');
+  if(/^\d+$/.test(id)){
+    idField.value = String(parseInt(id) + 1);
+  } else {
+    idField.value = '';
+  }
+  document.getElementById('addType').value = '';
+  document.getElementById('addCam').value = '';
+  document.getElementById('addDesc').value = '';
+  document.getElementById('addNote').value = '';
+  showToast(`✅ 已添加「${id}」，继续添加`);
+  // Focus back to ID field for next shot
+  setTimeout(() => document.getElementById('addId').focus(), 100);
+});
+
+addDone.addEventListener('click', () => {
+  addModal.classList.remove('show');
+  showToast('📋 新建完成');
+});
+
+// Keyboard shortcuts in addModal
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && addModal.classList.contains('show')){
+    const active = document.activeElement;
+    if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')){
+      e.preventDefault();
+      addConfirm.click();
+    }
+  }
+  if(e.key === 'Escape') addModal.classList.remove('show');
+});
+
+// ============================================================
+// MODE TOGGLE
+// ============================================================
+modeBtn.addEventListener('click',()=>{
+  isListMode=!isListMode;
+  render();
+  showToast(isListMode?'📋 列表模式':'🗂️ 卡片模式');
+});
+
+// ============================================================
+// DRAG & DROP FILE
+// ============================================================
+let dragCounter=0;
+document.addEventListener('dragenter',e=>{e.preventDefault();dragCounter++;if(dragCounter===1)dropZone.classList.add('show')});
+document.addEventListener('dragleave',e=>{e.preventDefault();dragCounter--;if(dragCounter===0)dropZone.classList.remove('show')});
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{
+  e.preventDefault();dragCounter=0;dropZone.classList.remove('show');
+  const file=e.dataTransfer.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{const parsed=parseCSV(ev.target.result);applyCsvData(parsed)};
+  reader.readAsText(file);
+});
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown',e=>{
+  if(e.key==='l'||e.key==='L'){lockBtn.click();e.preventDefault()}
+  if(e.key==='i'||e.key==='I'){importBtn.click();e.preventDefault()}
+  if(e.key==='Escape'){importModal.classList.remove('show')}
+});
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+render();
+showToast('📋 分镜Checklist 已就绪');
+</script>
+</body>
+</html>
